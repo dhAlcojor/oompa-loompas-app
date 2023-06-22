@@ -18,17 +18,16 @@ package com.dhalcojor.oompaloompas.ui.oompaloompaslist
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.dhalcojor.oompaloompas.data.OompaLoompasListRepository
+import com.dhalcojor.oompaloompas.ui.oompaloompaslist.OompaLoompasListUiState.Error
+import com.dhalcojor.oompaloompas.ui.oompaloompaslist.OompaLoompasListUiState.Loading
+import com.dhalcojor.oompaloompas.ui.oompaloompaslist.OompaLoompasListUiState.Success
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
-import com.dhalcojor.oompaloompas.data.OompaLoompasListRepository
-import com.dhalcojor.oompaloompas.ui.oompaloompaslist.OompaLoompasListUiState.Error
-import com.dhalcojor.oompaloompas.ui.oompaloompaslist.OompaLoompasListUiState.Loading
-import com.dhalcojor.oompaloompas.ui.oompaloompaslist.OompaLoompasListUiState.Success
 import javax.inject.Inject
 
 @HiltViewModel
@@ -37,19 +36,13 @@ class OompaLoompasListViewModel @Inject constructor(
 ) : ViewModel() {
 
     val uiState: StateFlow<OompaLoompasListUiState> = oompaLoompasListRepository
-        .oompaLoompasLists.map<List<String>, OompaLoompasListUiState>(::Success)
+        .oompaLoompasLists.map<List<OompaLoompaListItemState>, OompaLoompasListUiState>(::Success)
         .catch { emit(Error(it)) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), Loading)
-
-    fun addOompaLoompasList(name: String) {
-        viewModelScope.launch {
-            oompaLoompasListRepository.add(name)
-        }
-    }
 }
 
 sealed interface OompaLoompasListUiState {
     object Loading : OompaLoompasListUiState
     data class Error(val throwable: Throwable) : OompaLoompasListUiState
-    data class Success(val data: List<String>) : OompaLoompasListUiState
+    data class Success(val data: List<OompaLoompaListItemState>) : OompaLoompasListUiState
 }

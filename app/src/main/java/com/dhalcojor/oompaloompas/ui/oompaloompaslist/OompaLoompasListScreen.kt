@@ -16,73 +16,122 @@
 
 package com.dhalcojor.oompaloompas.ui.oompaloompaslist
 
-import com.dhalcojor.oompaloompas.ui.theme.MyApplicationTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Button
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.dhalcojor.oompaloompas.R
+import com.dhalcojor.oompaloompas.ui.theme.MyApplicationTheme
 
 @Composable
-fun OompaLoompasListScreen(modifier: Modifier = Modifier, viewModel: OompaLoompasListViewModel = hiltViewModel()) {
+fun OompaLoompasListScreen(
+    viewModel: OompaLoompasListViewModel = hiltViewModel()
+) {
     val items by viewModel.uiState.collectAsStateWithLifecycle()
-    if (items is OompaLoompasListUiState.Success) {
-        OompaLoompasListScreen(
-            items = (items as OompaLoompasListUiState.Success).data,
-            onSave = viewModel::addOompaLoompasList,
-            modifier = modifier
-        )
+    when (items) {
+        is OompaLoompasListUiState.Loading -> {
+            Text("Loading...")
+        }
+
+        is OompaLoompasListUiState.Success -> {
+            OompaLoompasListScreen(
+                items = (items as OompaLoompasListUiState.Success).data,
+            )
+        }
+
+        else -> {
+            Text("Error")
+        }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun OompaLoompasListScreen(
-    items: List<String>,
-    onSave: (name: String) -> Unit,
-    modifier: Modifier = Modifier
+    items: List<OompaLoompaListItemState>,
 ) {
-    Column(modifier) {
-        var nameOompaLoompasList by remember { mutableStateOf("Compose") }
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            TextField(
-                value = nameOompaLoompasList,
-                onValueChange = { nameOompaLoompasList = it }
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Oompa Loompas") },
+                actions = {
+                    IconButton(onClick = { /*TODO*/ }) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.filter_list_24),
+                            contentDescription = "Filter",
+                        )
+                    }
+                }
             )
-
-            Button(modifier = Modifier.width(96.dp), onClick = { onSave(nameOompaLoompasList) }) {
-                Text("Save")
+        },
+        bottomBar = {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                IconButton(onClick = { /*TODO*/ }) {
+                    Icon(
+                        Icons.Filled.ArrowBack,
+                        contentDescription = "Previous page",
+                    )
+                }
+                Text(text = "1")
+                IconButton(onClick = { /*TODO*/ }) {
+                    Icon(
+                        Icons.Filled.ArrowForward,
+                        contentDescription = "Next page",
+                    )
+                }
             }
         }
-        items.forEach {
-            Text("Saved item: $it")
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .padding(horizontal = 8.dp, vertical = 0.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items.forEach {
+                Card(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(modifier = Modifier.padding(8.dp), text = "${it.firstName} ${it.lastName}")
+                }
+            }
         }
     }
 }
 
 // Previews
+val previewItems = listOf(
+    OompaLoompaListItemState("Marcy", "Karadzas"),
+    OompaLoompaListItemState("Kotlin", "Android"),
+)
 
 @Preview(showBackground = true)
 @Composable
 private fun DefaultPreview() {
     MyApplicationTheme {
-        OompaLoompasListScreen(listOf("Compose", "Room", "Kotlin"), onSave = {})
+        OompaLoompasListScreen(previewItems)
     }
 }
 
@@ -90,6 +139,6 @@ private fun DefaultPreview() {
 @Composable
 private fun PortraitPreview() {
     MyApplicationTheme {
-        OompaLoompasListScreen(listOf("Compose", "Room", "Kotlin"), onSave = {})
+        OompaLoompasListScreen(previewItems)
     }
 }

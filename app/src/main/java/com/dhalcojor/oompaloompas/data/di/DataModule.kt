@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import com.dhalcojor.oompaloompas.data.OompaLoompasListRepository
 import com.dhalcojor.oompaloompas.data.DefaultOompaLoompasListRepository
+import com.dhalcojor.oompaloompas.ui.oompaloompaslist.OompaLoompaListItemState
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -39,11 +40,14 @@ interface DataModule {
 }
 
 class FakeOompaLoompasListRepository @Inject constructor() : OompaLoompasListRepository {
-    override val oompaLoompasLists: Flow<List<String>> = flowOf(fakeOompaLoompasLists)
+    override val oompaLoompasLists: Flow<List<OompaLoompaListItemState>> = flowOf(fakeOompaLoompasLists)
 
     override suspend fun add(name: String) {
         throw NotImplementedError()
     }
 }
 
-val fakeOompaLoompasLists = listOf("One", "Two", "Three")
+val fakeOompaLoompasLists = listOf(
+    OompaLoompaListItemState("Marcy", "Karadzas"),
+    OompaLoompaListItemState("Kotlin", "Android"),
+)

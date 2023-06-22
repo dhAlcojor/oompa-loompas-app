@@ -17,13 +17,14 @@
 package com.dhalcojor.oompaloompas.data
 
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import com.dhalcojor.oompaloompas.data.local.database.OompaLoompasList
 import com.dhalcojor.oompaloompas.data.local.database.OompaLoompasListDao
+import com.dhalcojor.oompaloompas.ui.oompaloompaslist.OompaLoompaListItemState
+import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
 
 interface OompaLoompasListRepository {
-    val oompaLoompasLists: Flow<List<String>>
+    val oompaLoompasLists: Flow<List<OompaLoompaListItemState>>
 
     suspend fun add(name: String)
 }
@@ -32,8 +33,14 @@ class DefaultOompaLoompasListRepository @Inject constructor(
     private val oompaLoompasListDao: OompaLoompasListDao
 ) : OompaLoompasListRepository {
 
-    override val oompaLoompasLists: Flow<List<String>> =
-        oompaLoompasListDao.getOompaLoompasLists().map { items -> items.map { it.name } }
+    private val previewItems = listOf(
+        OompaLoompaListItemState("Marcy", "Karadzas"),
+        OompaLoompaListItemState("Kotlin", "Android"),
+    )
+
+    override val oompaLoompasLists: Flow<List<OompaLoompaListItemState>> = flow {
+        emit(previewItems)
+    }
 
     override suspend fun add(name: String) {
         oompaLoompasListDao.insertOompaLoompasList(OompaLoompasList(name = name))
