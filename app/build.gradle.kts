@@ -33,6 +33,7 @@ android {
         targetSdk = 33
         versionCode = 1
         versionName = "1.0"
+        buildConfigField("Boolean", "ENABLE_LOGS", "false")
 
         testInstrumentationRunner = "com.dhalcojor.oompaloompas.HiltTestRunner"
         vectorDrawables {
@@ -53,6 +54,12 @@ android {
                 "proguard-rules.pro"
             )
         }
+
+        getByName("debug") {
+            applicationIdSuffix = ".debug"
+            isDebuggable = true
+            buildConfigField("Boolean", "ENABLE_LOGS", "true")
+        }
     }
 
     compileOptions {
@@ -67,7 +74,7 @@ android {
     buildFeatures {
         compose = true
         aidl = false
-        buildConfig = false
+        buildConfig = true
         renderScript = false
         shaders = false
     }

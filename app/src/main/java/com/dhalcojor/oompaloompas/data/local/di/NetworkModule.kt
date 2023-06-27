@@ -16,6 +16,7 @@
 
 package com.dhalcojor.oompaloompas.data.local.di
 
+import android.util.Log
 import com.dhalcojor.oompaloompas.BuildConfig
 import com.dhalcojor.oompaloompas.data.remote.services.OompaLoompasService
 import com.squareup.moshi.Moshi
@@ -59,10 +60,11 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideOkHttpClient(): OkHttpClient {
+        Log.d("NetworkModule", "isDebug: ${BuildConfig.ENABLE_LOGS}")
         val builder = OkHttpClient.Builder()
         builder.connectTimeout(30, TimeUnit.SECONDS)
         builder.readTimeout(30, TimeUnit.SECONDS)
-        if (BuildConfig.DEBUG) {
+        if (BuildConfig.ENABLE_LOGS) {
             builder.addInterceptor(HttpLoggingInterceptor().apply {
                 level = HttpLoggingInterceptor.Level.BASIC
             })
