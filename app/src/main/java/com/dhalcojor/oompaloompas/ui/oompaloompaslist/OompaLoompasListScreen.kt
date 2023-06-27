@@ -16,11 +16,18 @@
 
 package com.dhalcojor.oompaloompas.ui.oompaloompaslist
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
@@ -28,47 +35,41 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.bumptech.glide.integration.compose.GlideImage
 import com.dhalcojor.oompaloompas.R
+import com.dhalcojor.oompaloompas.data.local.models.OompaLoompa
 import com.dhalcojor.oompaloompas.ui.theme.MyApplicationTheme
 
 @Composable
 fun OompaLoompasListScreen(
     viewModel: OompaLoompasListViewModel = hiltViewModel()
 ) {
-    val items by viewModel.uiState.collectAsStateWithLifecycle()
-    when (items) {
-        is OompaLoompasListUiState.Loading -> {
-            Text("Loading...")
-        }
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-        is OompaLoompasListUiState.Success -> {
-            OompaLoompasListScreen(
-                items = (items as OompaLoompasListUiState.Success).data,
-            )
-        }
-
-        else -> {
-            Text("Error")
-        }
+    if (uiState.oompaLoompasList.isEmpty() && !uiState.isLoading) {
+        viewModel.fetchOompaLoompas()
     }
+
+    OompaLoompasApp(uiState)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun OompaLoompasListScreen(
-    items: List<OompaLoompaListItemState>,
-) {
+private fun OompaLoompasApp(uiState: OompaLoompasListUiState) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -88,7 +89,7 @@ internal fun OompaLoompasListScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                IconButton(onClick = { /*TODO*/ }) {
+                IconButton(onClick = { /*TODO*/ }, enabled = uiState.currentPage > 1) {
                     Icon(
                         Icons.Filled.ArrowBack,
                         contentDescription = "Previous page",
@@ -104,17 +105,63 @@ internal fun OompaLoompasListScreen(
             }
         }
     ) { padding ->
-        Column(
+        if (uiState.isLoading) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+
+                contentAlignment = androidx.compose.ui.Alignment.Center
+            ) {
+                Text(text = "Loading...")
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .padding(padding)
+                    .padding(horizontal = 8.dp, vertical = 0.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(uiState.oompaLoompasList.size) { index ->
+                    OompaLoompasListItem(uiState.oompaLoompasList[index])
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalGlideComposeApi::class)
+@Composable
+private fun OompaLoompasListItem(item: OompaLoompa) {
+    Card {
+        Row(
             modifier = Modifier
-                .padding(padding)
-                .padding(horizontal = 8.dp, vertical = 0.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+                .fillMaxWidth()
+                .padding(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items.forEach {
-                Card(
+            GlideImage(
+                model = item.image,
+                contentDescription = "Oompa Loompa image",
+                modifier = Modifier
+                    .size(56.dp)
+            ) {
+                it.circleCrop()
+            }
+            Column(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "${item.firstName} ${item.lastName}",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(modifier = Modifier.padding(8.dp), text = "${it.firstName} ${it.lastName}")
+                    Text(text = item.profession, style = MaterialTheme.typography.bodyMedium)
+                    Text(text = "Age: ${item.age}", style = MaterialTheme.typography.bodyMedium)
+                }
+                Row {
+                    Text("Gender: ${item.gender}", style = MaterialTheme.typography.bodyMedium)
                 }
             }
         }
@@ -123,15 +170,71 @@ internal fun OompaLoompasListScreen(
 
 // Previews
 val previewItems = listOf(
-    OompaLoompaListItemState("Marcy", "Karadzas"),
-    OompaLoompaListItemState("Kotlin", "Android"),
+    OompaLoompa(
+        "Marcy",
+        "Karadzas",
+        "https://placehold.co/200",
+        "Developer",
+        24,
+        "F"
+    ),
+    OompaLoompa(
+        "Kotlin",
+        "Android",
+        "https://placehold.co/200",
+        "Minion",
+        141,
+        "M"
+    ),
 )
 
 @Preview(showBackground = true)
 @Composable
-private fun DefaultPreview() {
+private fun ListItemPreview() {
+    val item = previewItems[0]
     MyApplicationTheme {
-        OompaLoompasListScreen(previewItems)
+        Card {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                    contentDescription = "Oompa Loompa image",
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primary)
+                )
+                Column(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "${item.firstName} ${item.lastName}",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(text = item.profession, style = MaterialTheme.typography.bodyMedium)
+                        Text(text = "Age: ${item.age}", style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+
+            }
+        }
+
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun LoadingPreview() {
+    MyApplicationTheme {
+        OompaLoompasApp(OompaLoompasListUiState(isLoading = true))
     }
 }
 
@@ -139,6 +242,6 @@ private fun DefaultPreview() {
 @Composable
 private fun PortraitPreview() {
     MyApplicationTheme {
-        OompaLoompasListScreen(previewItems)
+        OompaLoompasApp(OompaLoompasListUiState(oompaLoompasList = previewItems))
     }
 }

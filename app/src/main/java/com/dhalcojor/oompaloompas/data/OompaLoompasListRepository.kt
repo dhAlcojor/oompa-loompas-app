@@ -16,33 +16,38 @@
 
 package com.dhalcojor.oompaloompas.data
 
-import kotlinx.coroutines.flow.Flow
-import com.dhalcojor.oompaloompas.data.local.database.OompaLoompasList
-import com.dhalcojor.oompaloompas.data.local.database.OompaLoompasListDao
-import com.dhalcojor.oompaloompas.ui.oompaloompaslist.OompaLoompaListItemState
-import kotlinx.coroutines.flow.flow
+import com.dhalcojor.oompaloompas.data.local.models.OompaLoompa
+import com.dhalcojor.oompaloompas.data.mappers.toOompaLoompa
+import com.dhalcojor.oompaloompas.data.remote.OompaLoompasRemoteDataSource
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 interface OompaLoompasListRepository {
-    val oompaLoompasLists: Flow<List<OompaLoompaListItemState>>
-
-    suspend fun add(name: String)
+    val oompaLoompas: List<OompaLoompa>
+    suspend fun fetchOompaLoompas(page: Int?, refresh: Boolean = false): List<OompaLoompa>
 }
 
 class DefaultOompaLoompasListRepository @Inject constructor(
-    private val oompaLoompasListDao: OompaLoompasListDao
+    private val oompaLoompasRemoteDataSource: OompaLoompasRemoteDataSource,
+    private val externalScope: CoroutineScope,
 ) : OompaLoompasListRepository {
 
-    private val previewItems = listOf(
-        OompaLoompaListItemState("Marcy", "Karadzas"),
-        OompaLoompaListItemState("Kotlin", "Android"),
-    )
+    // Mutex to make writes to cached values thread-safe.
+    private val oompaLoompasMutex = Mutex()
+    override var oompaLoompas: List<OompaLoompa> = emptyList()
+    override suspend fun fetchOompaLoompas(page: Int?, refresh: Boolean): List<OompaLoompa> {
+        if (refresh || oompaLoompas.isEmpty()) {
+            withContext(externalScope.coroutineContext) {
+                val networkResult = oompaLoompasRemoteDataSource.fetchOompaLoompas(page)
+                oompaLoompasMutex.withLock {
+                    oompaLoompas = networkResult.results.map { it.toOompaLoompa() }
+                }
+            }
+        }
 
-    override val oompaLoompasLists: Flow<List<OompaLoompaListItemState>> = flow {
-        emit(previewItems)
-    }
-
-    override suspend fun add(name: String) {
-        oompaLoompasListDao.insertOompaLoompasList(OompaLoompasList(name = name))
+        return oompaLoompasMutex.withLock { oompaLoompas }
     }
 }

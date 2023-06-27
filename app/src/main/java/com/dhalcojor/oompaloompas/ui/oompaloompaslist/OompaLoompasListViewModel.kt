@@ -16,33 +16,91 @@
 
 package com.dhalcojor.oompaloompas.ui.oompaloompaslist
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dhalcojor.oompaloompas.data.OompaLoompasListRepository
-import com.dhalcojor.oompaloompas.ui.oompaloompaslist.OompaLoompasListUiState.Error
-import com.dhalcojor.oompaloompas.ui.oompaloompaslist.OompaLoompasListUiState.Loading
-import com.dhalcojor.oompaloompas.ui.oompaloompaslist.OompaLoompasListUiState.Success
+import com.dhalcojor.oompaloompas.data.local.di.DefaultDispatcher
+import com.dhalcojor.oompaloompas.data.local.models.OompaLoompa
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.IOException
 import javax.inject.Inject
 
 @HiltViewModel
 class OompaLoompasListViewModel @Inject constructor(
-    private val oompaLoompasListRepository: OompaLoompasListRepository
+    private val oompaLoompasListRepository: OompaLoompasListRepository,
+    @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 
-    val uiState: StateFlow<OompaLoompasListUiState> = oompaLoompasListRepository
-        .oompaLoompasLists.map<List<OompaLoompaListItemState>, OompaLoompasListUiState>(::Success)
-        .catch { emit(Error(it)) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), Loading)
+    private val _uiState = MutableStateFlow(OompaLoompasListUiState())
+    val uiState: StateFlow<OompaLoompasListUiState> = _uiState.asStateFlow()
+    private var fetchJob: Job? = null
+
+    fun fetchOompaLoompas(page: Int? = 1) {
+        Log.d(TAG, "fetchOompaLoompas: page = $page")
+        _uiState.update { currentState ->
+            currentState.copy(
+                isLoading = true,
+                userMessages = emptyList(),
+                oompaLoompasList = emptyList()
+            )
+        }
+        fetchJob?.cancel()
+        fetchJob = viewModelScope.launch {
+            withContext(defaultDispatcher) {
+                _uiState.update { currentState ->
+                    try {
+                        val oompaLoompas = oompaLoompasListRepository.fetchOompaLoompas(page)
+                        Log.d(
+                            TAG,
+                            "fetchOompaLoompas: retrieved ${oompaLoompas.size} results"
+                        )
+                        currentState.copy(
+                            isLoading = false,
+                            userMessages = emptyList(),
+                            oompaLoompasList = oompaLoompas
+                        )
+                    } catch (ioe: IOException) {
+                        val messages = getMessagesFromThrowable(ioe)
+                        Log.e(TAG, "fetchOompaLoompas: error = $messages")
+                        currentState.copy(
+                            isLoading = false,
+                            userMessages = messages,
+                            oompaLoompasList = emptyList()
+                        )
+                    }
+
+                }
+            }
+        }
+    }
+
+    companion object {
+        private const val TAG = "OompaLoompasListVM"
+    }
 }
 
-sealed interface OompaLoompasListUiState {
-    object Loading : OompaLoompasListUiState
-    data class Error(val throwable: Throwable) : OompaLoompasListUiState
-    data class Success(val data: List<OompaLoompaListItemState>) : OompaLoompasListUiState
+fun getMessagesFromThrowable(throwable: Throwable): List<String> {
+    val messages = mutableListOf<String>()
+    var currentThrowable: Throwable? = throwable
+    while (currentThrowable != null) {
+        messages.add(currentThrowable.message ?: currentThrowable.toString())
+        currentThrowable = currentThrowable.cause
+    }
+    return messages
 }
+
+data class OompaLoompasListUiState(
+    val currentPage: Int = 1,
+    val oompaLoompasList: List<OompaLoompa> = emptyList(),
+    val isLoading: Boolean = false,
+    val userMessages: List<String> = emptyList()
+)

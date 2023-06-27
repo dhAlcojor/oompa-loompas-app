@@ -48,7 +48,10 @@ android {
     buildTypes {
         getByName("release") {
             isMinifyEnabled = false
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
 
@@ -101,6 +104,14 @@ dependencies {
     testImplementation(libs.hilt.android.testing)
     kaptTest(libs.hilt.android.compiler)
 
+    // Retrofit
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.moshi)
+    // Moshi
+    implementation(libs.moshi)
+    // Glide
+    implementation(libs.glide)
+
     // Arch Components
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
@@ -125,7 +136,6 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
 
     // Instrumented tests: jUnit rules and runners
-
     androidTestImplementation(libs.androidx.test.core)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.test.runner)

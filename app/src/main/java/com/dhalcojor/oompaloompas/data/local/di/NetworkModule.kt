@@ -16,33 +16,38 @@
 
 package com.dhalcojor.oompaloompas.data.local.di
 
-import android.content.Context
-import androidx.room.Room
+import com.dhalcojor.oompaloompas.data.remote.services.OompaLoompasService
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import com.dhalcojor.oompaloompas.data.local.database.AppDatabase
-import com.dhalcojor.oompaloompas.data.local.database.OompaLoompasListDao
+import retrofit2.Retrofit
+import retrofit2.converter.moshi.MoshiConverterFactory
 import javax.inject.Singleton
 
 
 @Module
 @InstallIn(SingletonComponent::class)
-class DatabaseModule {
-    @Provides
-    fun provideOompaLoompasListDao(appDatabase: AppDatabase): OompaLoompasListDao {
-        return appDatabase.oompaLoompasListDao()
+object NetworkModule {
+    private fun provideMoshi(): Moshi {
+        return Moshi.Builder()
+            .addLast(KotlinJsonAdapterFactory())
+            .build()
     }
 
     @Provides
     @Singleton
-    fun provideAppDatabase(@ApplicationContext appContext: Context): AppDatabase {
-        return Room.databaseBuilder(
-            appContext,
-            AppDatabase::class.java,
-            "OompaLoompasList"
-        ).build()
+    fun provideRetrofit(): Retrofit {
+        return Retrofit.Builder()
+            .baseUrl("https://2q2woep105.execute-api.eu-west-1.amazonaws.com/napptilus/")
+            .addConverterFactory(MoshiConverterFactory.create(provideMoshi()))
+            .build()
     }
+
+    @Provides
+    @Singleton
+    fun provideOompaLoompasService(retrofit: Retrofit) =
+        retrofit.create(OompaLoompasService::class.java)
 }
