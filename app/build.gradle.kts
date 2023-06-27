@@ -107,6 +107,7 @@ dependencies {
     // Retrofit
     implementation(libs.retrofit)
     implementation(libs.retrofit.moshi)
+    implementation(libs.logging.interceptor)
     // Moshi
     implementation(libs.moshi)
     // Glide

@@ -6,5 +6,5 @@ import retrofit2.http.Query
 
 interface OompaLoompasService {
     @GET("oompa-loompas")
-    suspend fun fetchOompaLoompas(@Query("page") page: Int? = 1): OompaLoompaResponse
+    suspend fun fetchOompaLoompas(@Query("page") page: Int): OompaLoompaResponse
 }

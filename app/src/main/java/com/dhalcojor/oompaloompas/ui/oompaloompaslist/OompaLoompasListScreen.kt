@@ -16,6 +16,7 @@
 
 package com.dhalcojor.oompaloompas.ui.oompaloompaslist
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -41,9 +42,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -54,6 +57,9 @@ import com.dhalcojor.oompaloompas.R
 import com.dhalcojor.oompaloompas.data.local.models.OompaLoompa
 import com.dhalcojor.oompaloompas.ui.theme.MyApplicationTheme
 
+const val TAG = "OompaLoompasListScreen"
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OompaLoompasListScreen(
     viewModel: OompaLoompasListViewModel = hiltViewModel()
@@ -64,18 +70,14 @@ fun OompaLoompasListScreen(
         viewModel.fetchOompaLoompas()
     }
 
-    OompaLoompasApp(uiState)
-}
+    Log.d(TAG, "uiState: $uiState")
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun OompaLoompasApp(uiState: OompaLoompasListUiState) {
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Oompa Loompas") },
                 actions = {
-                    IconButton(onClick = { /*TODO*/ }) {
+                    IconButton(onClick = { viewModel.fetchOompaLoompas(uiState.currentPage - 1) }) {
                         Icon(
                             painter = painterResource(id = R.drawable.filter_list_24),
                             contentDescription = "Filter",
@@ -85,31 +87,19 @@ private fun OompaLoompasApp(uiState: OompaLoompasListUiState) {
             )
         },
         bottomBar = {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                IconButton(onClick = { /*TODO*/ }, enabled = uiState.currentPage > 1) {
-                    Icon(
-                        Icons.Filled.ArrowBack,
-                        contentDescription = "Previous page",
-                    )
-                }
-                Text(text = "1")
-                IconButton(onClick = { /*TODO*/ }) {
-                    Icon(
-                        Icons.Filled.ArrowForward,
-                        contentDescription = "Next page",
-                    )
-                }
-            }
+            BottomBar(
+                currentPage = uiState.currentPage,
+                totalPages = uiState.totalPages,
+                handlePrevious = { viewModel.fetchOompaLoompas(uiState.currentPage - 1) },
+                handleNext = { viewModel.fetchOompaLoompas(uiState.currentPage + 1) }
+            )
         }
     ) { padding ->
         if (uiState.isLoading) {
             Box(
                 modifier = Modifier.fillMaxSize(),
 
-                contentAlignment = androidx.compose.ui.Alignment.Center
+                contentAlignment = Alignment.Center
             ) {
                 Text(text = "Loading...")
             }
@@ -126,6 +116,39 @@ private fun OompaLoompasApp(uiState: OompaLoompasListUiState) {
             }
         }
     }
+}
+
+@Composable
+private fun BottomBar(
+    currentPage: Int,
+    totalPages: Int,
+    handlePrevious: () -> Unit,
+    handleNext: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        Alignment.CenterVertically
+    ) {
+        IconButton(onClick = { handlePrevious() }, enabled = currentPage > 1) {
+            Icon(
+                Icons.Filled.ArrowBack,
+                contentDescription = "Previous page",
+            )
+        }
+        Text(
+            textAlign = TextAlign.Center,
+            text = "$currentPage",
+            style = MaterialTheme.typography.titleLarge
+        )
+        IconButton(onClick = { handleNext() }, enabled = currentPage < totalPages) {
+            Icon(
+                Icons.Filled.ArrowForward,
+                contentDescription = "Next page",
+            )
+        }
+    }
+
 }
 
 @OptIn(ExperimentalGlideComposeApi::class)
@@ -190,6 +213,12 @@ val previewItems = listOf(
 
 @Preview(showBackground = true)
 @Composable
+private fun OompaLoompasBottomBar() {
+    BottomBar(currentPage = 1, totalPages = 2, {}, {})
+}
+
+@Preview(showBackground = true)
+@Composable
 private fun ListItemPreview() {
     val item = previewItems[0]
     MyApplicationTheme {
@@ -234,7 +263,7 @@ private fun ListItemPreview() {
 @Composable
 private fun LoadingPreview() {
     MyApplicationTheme {
-        OompaLoompasApp(OompaLoompasListUiState(isLoading = true))
+        //OompaLoompasApp(OompaLoompasListUiState(isLoading = true))
     }
 }
 
@@ -242,6 +271,6 @@ private fun LoadingPreview() {
 @Composable
 private fun PortraitPreview() {
     MyApplicationTheme {
-        OompaLoompasApp(OompaLoompasListUiState(oompaLoompasList = previewItems))
+        //OompaLoompasApp(OompaLoompasListUiState(oompaLoompasList = previewItems))
     }
 }

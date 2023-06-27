@@ -17,6 +17,7 @@
 package com.dhalcojor.oompaloompas.ui.oompaloompaslist
 
 import android.util.Log
+import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dhalcojor.oompaloompas.data.OompaLoompasListRepository
@@ -40,17 +41,22 @@ class OompaLoompasListViewModel @Inject constructor(
     @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(OompaLoompasListUiState())
+    private val _uiState = MutableStateFlow(
+        OompaLoompasListUiState(
+            oompaLoompasList = mutableStateListOf(),
+            userMessages = mutableStateListOf()
+        )
+    )
     val uiState: StateFlow<OompaLoompasListUiState> = _uiState.asStateFlow()
     private var fetchJob: Job? = null
 
-    fun fetchOompaLoompas(page: Int? = 1) {
+    fun fetchOompaLoompas(page: Int = 1) {
         Log.d(TAG, "fetchOompaLoompas: page = $page")
         _uiState.update { currentState ->
             currentState.copy(
                 isLoading = true,
-                userMessages = emptyList(),
-                oompaLoompasList = emptyList()
+                userMessages = mutableStateListOf(),
+                oompaLoompasList = mutableStateListOf()
             )
         }
         fetchJob?.cancel()
@@ -58,15 +64,20 @@ class OompaLoompasListViewModel @Inject constructor(
             withContext(defaultDispatcher) {
                 _uiState.update { currentState ->
                     try {
-                        val oompaLoompas = oompaLoompasListRepository.fetchOompaLoompas(page)
+                        val result = oompaLoompasListRepository.fetchOompaLoompas(
+                            page,
+                            page != currentState.currentPage
+                        )
                         Log.d(
                             TAG,
-                            "fetchOompaLoompas: retrieved ${oompaLoompas.size} results"
+                            "fetchOompaLoompas: retrieved ${result.oompaLoompas.size} results $result.oompaLoompas"
                         )
                         currentState.copy(
+                            currentPage = result.currentPage,
+                            totalPages = result.totalPages,
                             isLoading = false,
-                            userMessages = emptyList(),
-                            oompaLoompasList = oompaLoompas
+                            userMessages = mutableStateListOf(),
+                            oompaLoompasList = result.oompaLoompas
                         )
                     } catch (ioe: IOException) {
                         val messages = getMessagesFromThrowable(ioe)
@@ -74,7 +85,7 @@ class OompaLoompasListViewModel @Inject constructor(
                         currentState.copy(
                             isLoading = false,
                             userMessages = messages,
-                            oompaLoompasList = emptyList()
+                            oompaLoompasList = mutableStateListOf()
                         )
                     }
 
@@ -100,7 +111,8 @@ fun getMessagesFromThrowable(throwable: Throwable): List<String> {
 
 data class OompaLoompasListUiState(
     val currentPage: Int = 1,
-    val oompaLoompasList: List<OompaLoompa> = emptyList(),
+    val totalPages: Int = 1,
     val isLoading: Boolean = false,
-    val userMessages: List<String> = emptyList()
+    val oompaLoompasList: List<OompaLoompa> = mutableStateListOf(),
+    val userMessages: List<String> = mutableStateListOf()
 )

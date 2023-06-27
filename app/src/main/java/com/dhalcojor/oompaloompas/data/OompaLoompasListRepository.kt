@@ -16,8 +16,9 @@
 
 package com.dhalcojor.oompaloompas.data
 
-import com.dhalcojor.oompaloompas.data.local.models.OompaLoompa
-import com.dhalcojor.oompaloompas.data.mappers.toOompaLoompa
+import android.util.Log
+import com.dhalcojor.oompaloompas.data.local.models.OompaLoompaResult
+import com.dhalcojor.oompaloompas.data.mappers.toOompaLoompaResult
 import com.dhalcojor.oompaloompas.data.remote.OompaLoompasRemoteDataSource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.sync.Mutex
@@ -26,8 +27,8 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 interface OompaLoompasListRepository {
-    val oompaLoompas: List<OompaLoompa>
-    suspend fun fetchOompaLoompas(page: Int?, refresh: Boolean = false): List<OompaLoompa>
+    val oompaLoompaResult: OompaLoompaResult?
+    suspend fun fetchOompaLoompas(page: Int, refresh: Boolean = false): OompaLoompaResult
 }
 
 class DefaultOompaLoompasListRepository @Inject constructor(
@@ -36,18 +37,19 @@ class DefaultOompaLoompasListRepository @Inject constructor(
 ) : OompaLoompasListRepository {
 
     // Mutex to make writes to cached values thread-safe.
-    private val oompaLoompasMutex = Mutex()
-    override var oompaLoompas: List<OompaLoompa> = emptyList()
-    override suspend fun fetchOompaLoompas(page: Int?, refresh: Boolean): List<OompaLoompa> {
-        if (refresh || oompaLoompas.isEmpty()) {
+    private val oompaLoompaResultMutex = Mutex()
+    override var oompaLoompaResult: OompaLoompaResult? = null
+    override suspend fun fetchOompaLoompas(page: Int, refresh: Boolean): OompaLoompaResult {
+        if (refresh || oompaLoompaResult == null) {
+            Log.d("OompaLoompasListRepo", "fetchOompaLoompas: $page, $refresh")
             withContext(externalScope.coroutineContext) {
                 val networkResult = oompaLoompasRemoteDataSource.fetchOompaLoompas(page)
-                oompaLoompasMutex.withLock {
-                    oompaLoompas = networkResult.results.map { it.toOompaLoompa() }
+                oompaLoompaResultMutex.withLock {
+                    oompaLoompaResult = networkResult.toOompaLoompaResult()
                 }
             }
         }
 
-        return oompaLoompasMutex.withLock { oompaLoompas }
+        return oompaLoompaResultMutex.withLock { oompaLoompaResult!! }
     }
 }

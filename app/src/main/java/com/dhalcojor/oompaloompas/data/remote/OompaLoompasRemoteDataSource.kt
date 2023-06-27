@@ -11,7 +11,7 @@ class OompaLoompasRemoteDataSource @Inject constructor(
     private val oompaLoompasService: OompaLoompasService,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) {
-    suspend fun fetchOompaLoompas(page: Int?): OompaLoompaResponse =
+    suspend fun fetchOompaLoompas(page: Int): OompaLoompaResponse =
         withContext(ioDispatcher) {
             oompaLoompasService.fetchOompaLoompas(page)
         }
