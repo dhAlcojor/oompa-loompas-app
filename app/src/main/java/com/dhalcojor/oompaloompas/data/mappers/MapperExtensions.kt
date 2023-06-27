@@ -12,8 +12,9 @@ fun OompaLoompaResponse.toOompaLoompaResult() = OompaLoompaResult(
 )
 
 fun OompaLoompaResultResponse.toOompaLoompa() = OompaLoompa(
-    firstName = this.first_name,
-    lastName = this.last_name,
+    id = this.id,
+    firstName = this.firstName,
+    lastName = this.lastName,
     image = this.image,
     profession = this.profession,
     age = this.age,

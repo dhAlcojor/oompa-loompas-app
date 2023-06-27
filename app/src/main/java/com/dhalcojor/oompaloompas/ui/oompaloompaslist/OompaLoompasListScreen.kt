@@ -51,6 +51,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.dhalcojor.oompaloompas.R
@@ -62,6 +63,7 @@ const val TAG = "OompaLoompasListScreen"
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OompaLoompasListScreen(
+    navController: NavController,
     viewModel: OompaLoompasListViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -111,7 +113,9 @@ fun OompaLoompasListScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(uiState.oompaLoompasList.size) { index ->
-                    OompaLoompasListItem(uiState.oompaLoompasList[index])
+                    OompaLoompasListItem(
+                        uiState.oompaLoompasList[index],
+                    ) { navController.navigate("detail/${uiState.oompaLoompasList[index].id}") }
                 }
             }
         }
@@ -151,10 +155,12 @@ private fun BottomBar(
 
 }
 
-@OptIn(ExperimentalGlideComposeApi::class)
+@OptIn(ExperimentalGlideComposeApi::class, ExperimentalMaterial3Api::class)
 @Composable
-private fun OompaLoompasListItem(item: OompaLoompa) {
-    Card {
+private fun OompaLoompasListItem(item: OompaLoompa, handleOnClick: () -> Unit) {
+    Card(
+        onClick = { handleOnClick() },
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -194,6 +200,7 @@ private fun OompaLoompasListItem(item: OompaLoompa) {
 // Previews
 val previewItems = listOf(
     OompaLoompa(
+        1,
         "Marcy",
         "Karadzas",
         "https://placehold.co/200",
@@ -202,6 +209,7 @@ val previewItems = listOf(
         "F"
     ),
     OompaLoompa(
+        2,
         "Kotlin",
         "Android",
         "https://placehold.co/200",

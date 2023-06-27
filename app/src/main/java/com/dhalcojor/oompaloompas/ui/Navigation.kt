@@ -16,13 +16,13 @@
 
 package com.dhalcojor.oompaloompas.ui
 
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.dhalcojor.oompaloompas.ui.oompaloompadetail.OompaLoompaDetailScreen
 import com.dhalcojor.oompaloompas.ui.oompaloompaslist.OompaLoompasListScreen
 
 @Composable
@@ -30,7 +30,10 @@ fun MainNavigation() {
     val navController = rememberNavController()
 
     NavHost(navController = navController, startDestination = "main") {
-        composable("main") { OompaLoompasListScreen() }
-        // TODO: Add more destinations
+        composable("main") { OompaLoompasListScreen(navController) }
+        composable(
+            "detail/{oompaLoompaId}",
+            arguments = listOf(navArgument("oompaLoompaId") { type = NavType.IntType })
+        ) { OompaLoompaDetailScreen(navController) }
     }
 }
