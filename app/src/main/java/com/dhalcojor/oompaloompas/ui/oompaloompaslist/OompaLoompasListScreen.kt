@@ -180,18 +180,16 @@ private fun OompaLoompasListItem(item: OompaLoompa, handleOnClick: () -> Unit) {
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = "${item.firstName} ${item.lastName}",
+                    "${item.firstName} ${item.lastName}",
                     style = MaterialTheme.typography.titleMedium
                 )
+                Text(text = item.profession, style = MaterialTheme.typography.bodyMedium)
                 Row(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(text = item.profession, style = MaterialTheme.typography.bodyMedium)
-                    Text(text = "Age: ${item.age}", style = MaterialTheme.typography.bodyMedium)
-                }
-                Row {
                     Text("Gender: ${item.gender}", style = MaterialTheme.typography.bodyMedium)
+                    Text(text = "Age: ${item.age}", style = MaterialTheme.typography.bodyMedium)
                 }
             }
         }
@@ -250,18 +248,18 @@ private fun ListItemPreview() {
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = "${item.firstName} ${item.lastName}",
+                        "${item.firstName} ${item.lastName}",
                         style = MaterialTheme.typography.titleMedium
                     )
+                    Text(text = item.profession, style = MaterialTheme.typography.bodyMedium)
                     Row(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(text = item.profession, style = MaterialTheme.typography.bodyMedium)
+                        Text("Gender: ${item.gender}", style = MaterialTheme.typography.bodyMedium)
                         Text(text = "Age: ${item.age}", style = MaterialTheme.typography.bodyMedium)
                     }
                 }
-
             }
         }
 
