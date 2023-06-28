@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -37,7 +36,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import com.dhalcojor.oompaloompas.data.local.models.OompaLoompaDetails
 import com.dhalcojor.oompaloompas.data.local.models.OompaLoompaFavorite
@@ -56,13 +54,13 @@ fun OompaLoompaDetailScreen(
     Scaffold(
         topBar = {
             OompaLoompaDetailTopBar(
-                if (uiState.isLoading) "Oompa Loompa details" else "${uiState.oompaLoompa?.firstName} ${uiState.oompaLoompa?.lastName}",
+                uiState,
                 goBack = { navController.popBackStack() }
             )
         },
     ) { paddingValues ->
         OompaLoompaDetailContent(
-            uiState.oompaLoompa,
+            uiState,
             paddingValues
         )
     }
@@ -70,7 +68,8 @@ fun OompaLoompaDetailScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun OompaLoompaDetailTopBar(oompaLoompaName: String, goBack: () -> Unit) {
+private fun OompaLoompaDetailTopBar(uiState: OompaLoompaDetailUiState, goBack: () -> Unit) {
+    val oompaLoompaName = uiState.oompaLoompa?.let { "${it.firstName} ${it.lastName}" } ?: "Loading..."
     TopAppBar(
         title = { Text(oompaLoompaName) },
         scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(),
@@ -84,17 +83,20 @@ private fun OompaLoompaDetailTopBar(oompaLoompaName: String, goBack: () -> Unit)
 
 @Composable
 private fun OompaLoompaDetailContent(
-    oompaLoompa: OompaLoompaDetails?,
+    uiState: OompaLoompaDetailUiState,
     padding: PaddingValues
 ) {
-    if (oompaLoompa == null) {
+    if (uiState.oompaLoompa == null) {
         Box(
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            Text("Loading...")
+            Text(
+                if (uiState.isLoading) "Loading..."
+                else "Oops! Something went wrong.\nPlease, try again later."
+            )
         }
     } else {
         val selectedTabIndex = remember { mutableStateOf(0) }
@@ -121,6 +123,7 @@ private fun OompaLoompaDetailContent(
             Box(
                 modifier = Modifier.padding(16.dp)
             ) {
+                val oompaLoompa = uiState.oompaLoompa
                 when (selectedTabIndex.value) {
                     0 -> BasicTabContent(oompaLoompa)
                     1 -> QuotaTabContent(oompaLoompa.quota)
@@ -385,16 +388,21 @@ private val previewOompaLoompa = OompaLoompaDetails(
 @Preview(showBackground = true)
 @Composable
 private fun OompaLoompaDetailsScreen() {
+    val previewUiState = OompaLoompaDetailUiState(
+        false,
+        emptyList(),
+        previewOompaLoompa,
+    )
     Scaffold(
         topBar = {
             OompaLoompaDetailTopBar(
-                "${previewOompaLoompa.firstName} ${previewOompaLoompa.lastName}",
+                previewUiState,
                 goBack = { }
             )
         },
     ) { paddingValues ->
         OompaLoompaDetailContent(
-            previewOompaLoompa,
+            previewUiState,
             paddingValues
         )
     }
@@ -403,7 +411,14 @@ private fun OompaLoompaDetailsScreen() {
 @Preview(showBackground = true)
 @Composable
 private fun OompaLoompaTabRow() {
-    OompaLoompaDetailContent(previewOompaLoompa, PaddingValues(0.dp))
+    OompaLoompaDetailContent(
+        OompaLoompaDetailUiState(
+            false,
+            emptyList(),
+            previewOompaLoompa,
+        ),
+        PaddingValues(0.dp)
+    )
 }
 
 @Preview(showBackground = true)

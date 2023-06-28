@@ -54,6 +54,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import com.dhalcojor.oompaloompas.R
 import com.dhalcojor.oompaloompas.data.local.models.OompaLoompa
@@ -73,14 +74,32 @@ fun OompaLoompasListScreen(
         viewModel.fetchOompaLoompas()
     }
 
-    Log.d(TAG, "uiState: $uiState")
+    val onPrevPage = { viewModel.fetchOompaLoompas(uiState.currentPage - 1) }
+    val onNextPage = { viewModel.fetchOompaLoompas(uiState.currentPage + 1) }
+    val onGoToDetail: (id: Int) -> Unit = { id -> navController.navigate("details/${id}") }
 
+    OompaLoompasListLayout(
+        uiState = uiState,
+        onPrevPage = onPrevPage,
+        onNextPage = onNextPage,
+        onGoToDetail = onGoToDetail,
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun OompaLoompasListLayout(
+    uiState: OompaLoompasListUiState,
+    onPrevPage: () -> Unit,
+    onNextPage: () -> Unit,
+    onGoToDetail: (id: Int) -> Unit,
+) {
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Oompa Loompas") },
                 actions = {
-                    IconButton(onClick = { viewModel.fetchOompaLoompas(uiState.currentPage - 1) }) {
+                    IconButton(onClick = { /*TODO*/ }) {
                         Icon(
                             painter = painterResource(id = R.drawable.filter_list_24),
                             contentDescription = "Filter",
@@ -93,17 +112,20 @@ fun OompaLoompasListScreen(
             BottomBar(
                 currentPage = uiState.currentPage,
                 totalPages = uiState.totalPages,
-                handlePrevious = { viewModel.fetchOompaLoompas(uiState.currentPage - 1) },
-                handleNext = { viewModel.fetchOompaLoompas(uiState.currentPage + 1) }
+                handlePrevious = onPrevPage,
+                handleNext = onNextPage,
             )
         }
     ) { padding ->
-        if (uiState.isLoading) {
+        if (uiState.isLoading || uiState.userMessages.isNotEmpty()) {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = "Loading...")
+                Text(
+                    if (uiState.isLoading) "Loading..."
+                    else "Oops! Something went wrong.\nPlease, try again later."
+                )
             }
         } else {
             LazyColumn(
@@ -115,11 +137,12 @@ fun OompaLoompasListScreen(
                 items(uiState.oompaLoompasList.size) { index ->
                     OompaLoompasListItem(
                         uiState.oompaLoompasList[index],
-                    ) { navController.navigate("detail/${uiState.oompaLoompasList[index].id}") }
+                    ) { onGoToDetail(uiState.oompaLoompasList[index].id) }
                 }
             }
         }
     }
+
 }
 
 @Composable
@@ -270,7 +293,25 @@ private fun ListItemPreview() {
 @Composable
 private fun LoadingPreview() {
     MyApplicationTheme {
-        //OompaLoompasApp(OompaLoompasListUiState(isLoading = true))
+        OompaLoompasListLayout(
+            OompaLoompasListUiState(isLoading = true),
+            {},
+            {},
+            {},
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ErrorPreview() {
+    MyApplicationTheme {
+        OompaLoompasListLayout(
+            OompaLoompasListUiState(userMessages = listOf("Error")),
+            {},
+            {},
+            {},
+        )
     }
 }
 
@@ -278,6 +319,11 @@ private fun LoadingPreview() {
 @Composable
 private fun PortraitPreview() {
     MyApplicationTheme {
-        //OompaLoompasApp(OompaLoompasListUiState(oompaLoompasList = previewItems))
+        OompaLoompasListLayout(
+            OompaLoompasListUiState(oompaLoompasList = previewItems),
+            {},
+            {},
+            {},
+        )
     }
 }
