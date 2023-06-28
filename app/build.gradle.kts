@@ -117,8 +117,8 @@ dependencies {
     implementation(libs.logging.interceptor)
     // Moshi
     implementation(libs.moshi)
-    // Glide
-    implementation(libs.glide)
+    // Coil
+    implementation(libs.coil)
 
     // Arch Components
     implementation(libs.androidx.lifecycle.runtime.compose)

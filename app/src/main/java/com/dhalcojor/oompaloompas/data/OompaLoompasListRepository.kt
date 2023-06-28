@@ -17,7 +17,9 @@
 package com.dhalcojor.oompaloompas.data
 
 import android.util.Log
+import com.dhalcojor.oompaloompas.data.local.models.OompaLoompaDetails
 import com.dhalcojor.oompaloompas.data.local.models.OompaLoompaResult
+import com.dhalcojor.oompaloompas.data.mappers.toOompaLoompaDetails
 import com.dhalcojor.oompaloompas.data.mappers.toOompaLoompaResult
 import com.dhalcojor.oompaloompas.data.remote.OompaLoompasRemoteDataSource
 import kotlinx.coroutines.CoroutineScope
@@ -28,7 +30,9 @@ import javax.inject.Inject
 
 interface OompaLoompasListRepository {
     val oompaLoompaResult: OompaLoompaResult?
+
     suspend fun fetchOompaLoompas(page: Int, refresh: Boolean = false): OompaLoompaResult
+    suspend fun fetchOompaLoompaDetails(id: Int): OompaLoompaDetails
 }
 
 class DefaultOompaLoompasListRepository @Inject constructor(
@@ -39,6 +43,9 @@ class DefaultOompaLoompasListRepository @Inject constructor(
     // Mutex to make writes to cached values thread-safe.
     private val oompaLoompaResultMutex = Mutex()
     override var oompaLoompaResult: OompaLoompaResult? = null
+
+    private val oompaLoompaDetailsMutex = Mutex()
+
     override suspend fun fetchOompaLoompas(page: Int, refresh: Boolean): OompaLoompaResult {
         if (refresh || oompaLoompaResult == null) {
             Log.d("OompaLoompasListRepo", "fetchOompaLoompas: $page, $refresh")
@@ -51,5 +58,11 @@ class DefaultOompaLoompasListRepository @Inject constructor(
         }
 
         return oompaLoompaResultMutex.withLock { oompaLoompaResult!! }
+    }
+
+    override suspend fun fetchOompaLoompaDetails(id: Int): OompaLoompaDetails {
+        return withContext(externalScope.coroutineContext) {
+            oompaLoompasRemoteDataSource.fetchOompaLoompaDetails(id).toOompaLoompaDetails()
+        }
     }
 }

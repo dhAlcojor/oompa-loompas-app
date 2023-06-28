@@ -45,6 +45,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.painter.ColorPainter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -52,8 +54,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.bumptech.glide.integration.compose.GlideImage
+import coil.compose.AsyncImage
 import com.dhalcojor.oompaloompas.R
 import com.dhalcojor.oompaloompas.data.local.models.OompaLoompa
 import com.dhalcojor.oompaloompas.ui.theme.MyApplicationTheme
@@ -100,7 +101,6 @@ fun OompaLoompasListScreen(
         if (uiState.isLoading) {
             Box(
                 modifier = Modifier.fillMaxSize(),
-
                 contentAlignment = Alignment.Center
             ) {
                 Text(text = "Loading...")
@@ -155,7 +155,7 @@ private fun BottomBar(
 
 }
 
-@OptIn(ExperimentalGlideComposeApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun OompaLoompasListItem(item: OompaLoompa, handleOnClick: () -> Unit) {
     Card(
@@ -167,14 +167,15 @@ private fun OompaLoompasListItem(item: OompaLoompa, handleOnClick: () -> Unit) {
                 .padding(8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            GlideImage(
+            AsyncImage(
                 model = item.image,
                 contentDescription = "Oompa Loompa image",
+                placeholder = ColorPainter(MaterialTheme.colorScheme.primary),
+                contentScale = ContentScale.Crop,
                 modifier = Modifier
+                    .clip(CircleShape)
                     .size(56.dp)
-            ) {
-                it.circleCrop()
-            }
+            )
             Column(
                 modifier = Modifier.fillMaxWidth()
             ) {

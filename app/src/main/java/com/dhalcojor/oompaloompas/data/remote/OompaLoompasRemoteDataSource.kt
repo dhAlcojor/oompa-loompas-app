@@ -1,6 +1,7 @@
 package com.dhalcojor.oompaloompas.data.remote
 
 import com.dhalcojor.oompaloompas.data.local.di.IoDispatcher
+import com.dhalcojor.oompaloompas.data.remote.models.OompaLoompaDetailsResponse
 import com.dhalcojor.oompaloompas.data.remote.models.OompaLoompaResponse
 import com.dhalcojor.oompaloompas.data.remote.services.OompaLoompasService
 import kotlinx.coroutines.CoroutineDispatcher
@@ -14,5 +15,10 @@ class OompaLoompasRemoteDataSource @Inject constructor(
     suspend fun fetchOompaLoompas(page: Int): OompaLoompaResponse =
         withContext(ioDispatcher) {
             oompaLoompasService.fetchOompaLoompas(page)
+        }
+
+    suspend fun fetchOompaLoompaDetails(id: Int): OompaLoompaDetailsResponse =
+        withContext(ioDispatcher) {
+            oompaLoompasService.fetchOompaLoompaDetails(id)
         }
 }
