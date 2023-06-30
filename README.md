@@ -35,6 +35,8 @@ The user can filter via a Dialog.
 
 ![img_2.png](img_2.png)
 
+![img_3.png](img_3.png)
+
 The filter is reset when the user navigates back to the list of Oompa Loompas and when a new page is
 loaded.
 
