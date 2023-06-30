@@ -8,4 +8,12 @@ data class OompaLoompa(
     val profession: String,
     val age: Int,
     val gender: String,
-)
+) {
+    operator fun get(filter: String): String {
+        return when (filter) {
+            gender -> gender
+            profession -> profession
+            else -> ""
+        }
+    }
+}

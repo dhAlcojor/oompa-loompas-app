@@ -31,17 +31,26 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -54,13 +63,19 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import com.dhalcojor.oompaloompas.R
 import com.dhalcojor.oompaloompas.data.local.models.OompaLoompa
 import com.dhalcojor.oompaloompas.ui.theme.MyApplicationTheme
 
 const val TAG = "OompaLoompasListScreen"
+
+private fun filterBy(oompaLoompa: OompaLoompa, filter: String): Boolean {
+    val res = if (filter.isBlank()) true
+    else oompaLoompa[filter] == filter
+    Log.d(TAG, "filterBy: $oompaLoompa -> $filter = $res")
+    return res
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -69,37 +84,158 @@ fun OompaLoompasListScreen(
     viewModel: OompaLoompasListViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val genders = remember { mutableListOf<String>() }
+    val professions = remember { mutableListOf<String>() }
+    var genderFilter by remember { mutableStateOf("") }
+    var professionFilter by remember { mutableStateOf("") }
+    var showDialog by remember { mutableStateOf(false) }
 
     if (uiState.oompaLoompasList.isEmpty() && !uiState.isLoading) {
         viewModel.fetchOompaLoompas()
     }
 
+    if (uiState.isLoading) {
+        genderFilter = ""
+        professionFilter = ""
+    }
+
+    if (uiState.oompaLoompasList.isNotEmpty()) {
+        genders.clear()
+        genders.add("")
+        genders.addAll(uiState.oompaLoompasList.map { it.gender }.distinct().toMutableList())
+
+        professions.clear()
+        professions.add("")
+        professions.addAll(
+            uiState.oompaLoompasList.map { it.profession }.distinct().toMutableList()
+        )
+    }
+
+    val conditions = listOf<((oompaLoompa: OompaLoompa) -> Boolean)>(
+        { oompaLoompa -> filterBy(oompaLoompa, genderFilter) },
+        { oompaLoompa -> filterBy(oompaLoompa, professionFilter) }
+    )
+    val filteredOompaLoompas = uiState.oompaLoompasList.filter { oompaLoompa ->
+        conditions.all { it(oompaLoompa) }
+    }.toMutableList()
+
+    if (showDialog) {
+        OompaLoompasFilterDialog(
+            dismissDialog = { showDialog = false },
+            genderFilter = genderFilter,
+            setGenderFilter = { gender -> genderFilter = gender },
+            genders = genders,
+            professionFilter = professionFilter,
+            setProfessionFilter = { profession -> professionFilter = profession },
+            professions = professions,
+        )
+    }
+
     val onPrevPage = { viewModel.fetchOompaLoompas(uiState.currentPage - 1) }
     val onNextPage = { viewModel.fetchOompaLoompas(uiState.currentPage + 1) }
-    val onGoToDetail: (id: Int) -> Unit = { id -> navController.navigate("details/${id}") }
+    val onGoToDetail: (id: Int) -> Unit = { id -> navController.navigate("detail/${id}") }
 
     OompaLoompasListLayout(
         uiState = uiState,
+        filteredOompaLoompas = filteredOompaLoompas,
         onPrevPage = onPrevPage,
         onNextPage = onNextPage,
         onGoToDetail = onGoToDetail,
+        toggleShowDialog = { showDialog = !showDialog },
     )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun OompaLoompasFilterDialog(
+    dismissDialog: () -> Unit,
+    genderFilter: String,
+    setGenderFilter: (String) -> Unit,
+    genders: List<String>,
+    professionFilter: String,
+    setProfessionFilter: (String) -> Unit,
+    professions: List<String>,
+) {
+    AlertDialog(
+        onDismissRequest = dismissDialog,
+    ) {
+        var genderDropdownExpanded by remember { mutableStateOf(false) }
+        var professionDropdownExpanded by remember { mutableStateOf(false) }
+        Card {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    "Filter your Oompa Loompas",
+                    modifier = Modifier.padding(8.dp),
+                    style = MaterialTheme.typography.titleLarge
+                )
+                Column(modifier = Modifier.padding(start = 16.dp)) {
+                    Button(onClick = { genderDropdownExpanded = true }) {
+                        Text(genderFilter.ifBlank { "Filter by Gender" })
+                        Icon(Icons.Default.ArrowDropDown, contentDescription = "Gender Filter")
+                    }
+                    DropdownMenu(
+                        expanded = genderDropdownExpanded,
+                        onDismissRequest = { genderDropdownExpanded = false }
+                    ) {
+                        genders.forEach { gender ->
+                            DropdownMenuItem(
+                                text = { Text(gender.ifBlank { "-" }) },
+                                onClick = {
+                                    setGenderFilter(gender)
+                                    genderDropdownExpanded = false
+                                })
+                        }
+                    }
+                    Button(onClick = { professionDropdownExpanded = true }) {
+                        Text(professionFilter.ifBlank { "Filter by Profession" })
+                        Icon(
+                            Icons.Default.ArrowDropDown,
+                            contentDescription = "Profession Filter"
+                        )
+                    }
+                    DropdownMenu(expanded = professionDropdownExpanded, onDismissRequest = {
+                        professionDropdownExpanded = false
+                    }) {
+                        professions.forEach { profession ->
+                            DropdownMenuItem(
+                                text = { Text(profession.ifBlank { "-" }) },
+                                onClick = {
+                                    setProfessionFilter(profession)
+                                    professionDropdownExpanded = false
+                                })
+                        }
+                    }
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    Arrangement.End
+                ) {
+                    TextButton(onClick = dismissDialog) {
+                        Text("Close".uppercase())
+                    }
+                }
+            }
+        }
+    }
+
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun OompaLoompasListLayout(
     uiState: OompaLoompasListUiState,
+    filteredOompaLoompas: List<OompaLoompa>,
     onPrevPage: () -> Unit,
     onNextPage: () -> Unit,
     onGoToDetail: (id: Int) -> Unit,
+    toggleShowDialog: () -> Unit,
 ) {
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Oompa Loompas") },
                 actions = {
-                    IconButton(onClick = { /*TODO*/ }) {
+                    IconButton(onClick = toggleShowDialog) {
                         Icon(
                             painter = painterResource(id = R.drawable.filter_list_24),
                             contentDescription = "Filter",
@@ -128,16 +264,17 @@ private fun OompaLoompasListLayout(
                 )
             }
         } else {
+            val oompaLoompas = filteredOompaLoompas.ifEmpty { uiState.oompaLoompasList }
             LazyColumn(
                 modifier = Modifier
                     .padding(padding)
                     .padding(horizontal = 8.dp, vertical = 0.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(uiState.oompaLoompasList.size) { index ->
+                items(oompaLoompas.size) { index ->
                     OompaLoompasListItem(
-                        uiState.oompaLoompasList[index],
-                    ) { onGoToDetail(uiState.oompaLoompasList[index].id) }
+                        oompaLoompas[index],
+                    ) { onGoToDetail(oompaLoompas[index].id) }
                 }
             }
         }
@@ -295,6 +432,8 @@ private fun LoadingPreview() {
     MyApplicationTheme {
         OompaLoompasListLayout(
             OompaLoompasListUiState(isLoading = true),
+            emptyList(),
+            {},
             {},
             {},
             {},
@@ -308,6 +447,8 @@ private fun ErrorPreview() {
     MyApplicationTheme {
         OompaLoompasListLayout(
             OompaLoompasListUiState(userMessages = listOf("Error")),
+            emptyList(),
+            {},
             {},
             {},
             {},
@@ -321,6 +462,8 @@ private fun PortraitPreview() {
     MyApplicationTheme {
         OompaLoompasListLayout(
             OompaLoompasListUiState(oompaLoompasList = previewItems),
+            emptyList(),
+            {},
             {},
             {},
             {},
