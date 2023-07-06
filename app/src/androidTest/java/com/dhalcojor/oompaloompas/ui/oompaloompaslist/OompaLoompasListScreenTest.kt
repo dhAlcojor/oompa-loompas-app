@@ -19,8 +19,8 @@ package com.dhalcojor.oompaloompas.ui.oompaloompaslist
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.dhalcojor.oompaloompas.data.oompaLoompas
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -38,14 +38,19 @@ class OompaLoompasListScreenTest {
     @Before
     fun setup() {
         composeTestRule.setContent {
-            OompaLoompasListScreen(FAKE_DATA, onSave = {})
+            OompaLoompasListLayout(
+                OompaLoompasListUiState(1, 20, false, listOf(), emptyList()),
+                oompaLoompas,
+                { },
+                { },
+                { id -> print(id) },
+                { },
+            )
         }
     }
 
     @Test
     fun firstItem_exists() {
-        composeTestRule.onNodeWithText(FAKE_DATA.first()).assertExists().performClick()
+        composeTestRule.onNodeWithText(oompaLoompas[0].firstName).assertExists()
     }
 }
-
-private val FAKE_DATA = listOf("Compose", "Room", "Kotlin")

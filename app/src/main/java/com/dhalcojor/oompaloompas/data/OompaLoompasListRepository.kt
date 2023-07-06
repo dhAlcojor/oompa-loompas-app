@@ -16,12 +16,11 @@
 
 package com.dhalcojor.oompaloompas.data
 
-import android.util.Log
 import com.dhalcojor.oompaloompas.data.local.models.OompaLoompaDetails
 import com.dhalcojor.oompaloompas.data.local.models.OompaLoompaResult
 import com.dhalcojor.oompaloompas.data.mappers.toOompaLoompaDetails
 import com.dhalcojor.oompaloompas.data.mappers.toOompaLoompaResult
-import com.dhalcojor.oompaloompas.data.remote.OompaLoompasRemoteDataSource
+import com.dhalcojor.oompaloompas.data.remote.OompaLoompasDataSource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -36,7 +35,7 @@ interface OompaLoompasListRepository {
 }
 
 class DefaultOompaLoompasListRepository @Inject constructor(
-    private val oompaLoompasRemoteDataSource: OompaLoompasRemoteDataSource,
+    private val oompaLoompasRemoteDataSource: OompaLoompasDataSource,
     private val externalScope: CoroutineScope,
 ) : OompaLoompasListRepository {
 
@@ -44,11 +43,8 @@ class DefaultOompaLoompasListRepository @Inject constructor(
     private val oompaLoompaResultMutex = Mutex()
     override var oompaLoompaResult: OompaLoompaResult? = null
 
-    private val oompaLoompaDetailsMutex = Mutex()
-
     override suspend fun fetchOompaLoompas(page: Int, refresh: Boolean): OompaLoompaResult {
         if (refresh || oompaLoompaResult == null) {
-            Log.d("OompaLoompasListRepo", "fetchOompaLoompas: $page, $refresh")
             withContext(externalScope.coroutineContext) {
                 val networkResult = oompaLoompasRemoteDataSource.fetchOompaLoompas(page)
                 oompaLoompaResultMutex.withLock {

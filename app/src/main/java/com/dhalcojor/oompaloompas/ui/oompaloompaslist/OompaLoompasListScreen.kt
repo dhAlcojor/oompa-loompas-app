@@ -16,7 +16,6 @@
 
 package com.dhalcojor.oompaloompas.ui.oompaloompaslist
 
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -57,6 +56,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -66,18 +66,14 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.dhalcojor.oompaloompas.R
 import com.dhalcojor.oompaloompas.data.local.models.OompaLoompa
+import com.dhalcojor.oompaloompas.data.oompaLoompas
 import com.dhalcojor.oompaloompas.ui.theme.MyApplicationTheme
 
-const val TAG = "OompaLoompasListScreen"
-
 private fun filterBy(oompaLoompa: OompaLoompa, filter: String): Boolean {
-    val res = if (filter.isBlank()) true
+    return if (filter.isBlank()) true
     else oompaLoompa[filter] == filter
-    Log.d(TAG, "filterBy: $oompaLoompa -> $filter = $res")
-    return res
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OompaLoompasListScreen(
     navController: NavController,
@@ -164,14 +160,17 @@ private fun OompaLoompasFilterDialog(
         Card {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    "Filter your Oompa Loompas",
+                    stringResource(R.string.filter_dialog_title),
                     modifier = Modifier.padding(8.dp),
                     style = MaterialTheme.typography.titleLarge
                 )
                 Column(modifier = Modifier.padding(start = 16.dp)) {
                     Button(onClick = { genderDropdownExpanded = true }) {
-                        Text(genderFilter.ifBlank { "Filter by Gender" })
-                        Icon(Icons.Default.ArrowDropDown, contentDescription = "Gender Filter")
+                        Text(genderFilter.ifBlank { stringResource(R.string.filter_dialog_gender_dropdown) })
+                        Icon(
+                            Icons.Default.ArrowDropDown,
+                            contentDescription = stringResource(R.string.filter_dialog_gender_alt)
+                        )
                     }
                     DropdownMenu(
                         expanded = genderDropdownExpanded,
@@ -187,10 +186,10 @@ private fun OompaLoompasFilterDialog(
                         }
                     }
                     Button(onClick = { professionDropdownExpanded = true }) {
-                        Text(professionFilter.ifBlank { "Filter by Profession" })
+                        Text(professionFilter.ifBlank { stringResource(R.string.filter_dialog_profession_dropdown) })
                         Icon(
                             Icons.Default.ArrowDropDown,
-                            contentDescription = "Profession Filter"
+                            contentDescription = stringResource(R.string.filter_dialog_profession_alt)
                         )
                     }
                     DropdownMenu(expanded = professionDropdownExpanded, onDismissRequest = {
@@ -222,7 +221,7 @@ private fun OompaLoompasFilterDialog(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun OompaLoompasListLayout(
+fun OompaLoompasListLayout(
     uiState: OompaLoompasListUiState,
     filteredOompaLoompas: List<OompaLoompa>,
     onPrevPage: () -> Unit,
@@ -233,7 +232,7 @@ private fun OompaLoompasListLayout(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Oompa Loompas") },
+                title = { Text(stringResource(id = R.string.toolbar_title)) },
                 actions = {
                     IconButton(onClick = toggleShowDialog) {
                         Icon(
@@ -259,8 +258,8 @@ private fun OompaLoompasListLayout(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    if (uiState.isLoading) "Loading..."
-                    else "Oops! Something went wrong.\nPlease, try again later."
+                    if (uiState.isLoading) stringResource(R.string.loading)
+                    else stringResource(R.string.generic_error_message)
                 )
             }
         } else {
@@ -297,7 +296,7 @@ private fun BottomBar(
         IconButton(onClick = { handlePrevious() }, enabled = currentPage > 1) {
             Icon(
                 Icons.Filled.ArrowBack,
-                contentDescription = "Previous page",
+                contentDescription = stringResource(R.string.previous_page_icon_alt),
             )
         }
         Text(
@@ -308,7 +307,7 @@ private fun BottomBar(
         IconButton(onClick = { handleNext() }, enabled = currentPage < totalPages) {
             Icon(
                 Icons.Filled.ArrowForward,
-                contentDescription = "Next page",
+                contentDescription = stringResource(R.string.next_page_icon_alt),
             )
         }
     }
@@ -329,7 +328,7 @@ private fun OompaLoompasListItem(item: OompaLoompa, handleOnClick: () -> Unit) {
         ) {
             AsyncImage(
                 model = item.image,
-                contentDescription = "Oompa Loompa image",
+                contentDescription = stringResource(R.string.oompa_loompa_image_alt),
                 placeholder = ColorPainter(MaterialTheme.colorScheme.primary),
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
@@ -348,8 +347,14 @@ private fun OompaLoompasListItem(item: OompaLoompa, handleOnClick: () -> Unit) {
                     horizontalArrangement = Arrangement.SpaceBetween,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Gender: ${item.gender}", style = MaterialTheme.typography.bodyMedium)
-                    Text(text = "Age: ${item.age}", style = MaterialTheme.typography.bodyMedium)
+                    Text(
+                        stringResource(R.string.gender_label, item.gender),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Text(
+                        text = stringResource(R.string.age_label, item.age),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
                 }
             }
         }
@@ -357,26 +362,7 @@ private fun OompaLoompasListItem(item: OompaLoompa, handleOnClick: () -> Unit) {
 }
 
 // Previews
-val previewItems = listOf(
-    OompaLoompa(
-        1,
-        "Marcy",
-        "Karadzas",
-        "https://placehold.co/200",
-        "Developer",
-        24,
-        "F"
-    ),
-    OompaLoompa(
-        2,
-        "Kotlin",
-        "Android",
-        "https://placehold.co/200",
-        "Minion",
-        141,
-        "M"
-    ),
-)
+val previewItems = oompaLoompas
 
 @Preview(showBackground = true)
 @Composable
@@ -398,7 +384,7 @@ private fun ListItemPreview() {
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.ic_launcher_foreground),
-                    contentDescription = "Oompa Loompa image",
+                    contentDescription = stringResource(id = R.string.oompa_loompa_image_alt),
                     modifier = Modifier
                         .size(56.dp)
                         .clip(CircleShape)
@@ -416,8 +402,14 @@ private fun ListItemPreview() {
                         horizontalArrangement = Arrangement.SpaceBetween,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Gender: ${item.gender}", style = MaterialTheme.typography.bodyMedium)
-                        Text(text = "Age: ${item.age}", style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            stringResource(R.string.gender_label, item.gender),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Text(
+                            text = stringResource(R.string.age_label, item.age),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
                     }
                 }
             }

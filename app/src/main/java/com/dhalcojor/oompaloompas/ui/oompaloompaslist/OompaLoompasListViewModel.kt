@@ -16,7 +16,6 @@
 
 package com.dhalcojor.oompaloompas.ui.oompaloompaslist
 
-import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -51,7 +50,6 @@ class OompaLoompasListViewModel @Inject constructor(
     private var fetchJob: Job? = null
 
     fun fetchOompaLoompas(page: Int = 1) {
-        Log.d(TAG, "fetchOompaLoompas: page = $page")
         _uiState.update { currentState ->
             currentState.copy(
                 isLoading = true,
@@ -68,10 +66,7 @@ class OompaLoompasListViewModel @Inject constructor(
                             page,
                             page != currentState.currentPage
                         )
-                        Log.d(
-                            TAG,
-                            "fetchOompaLoompas: retrieved ${result.oompaLoompas.size} results $result.oompaLoompas"
-                        )
+
                         currentState.copy(
                             currentPage = result.currentPage,
                             totalPages = result.totalPages,
@@ -81,7 +76,7 @@ class OompaLoompasListViewModel @Inject constructor(
                         )
                     } catch (ioe: IOException) {
                         val messages = getMessagesFromThrowable(ioe)
-                        Log.e(TAG, "fetchOompaLoompas: error = $messages")
+
                         currentState.copy(
                             isLoading = false,
                             userMessages = messages,
@@ -92,10 +87,6 @@ class OompaLoompasListViewModel @Inject constructor(
                 }
             }
         }
-    }
-
-    companion object {
-        private const val TAG = "OompaLoompasListVM"
     }
 }
 

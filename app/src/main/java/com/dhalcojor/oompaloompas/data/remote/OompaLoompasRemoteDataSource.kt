@@ -8,16 +8,21 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
+interface OompaLoompasDataSource {
+    suspend fun fetchOompaLoompas(page: Int): OompaLoompaResponse
+    suspend fun fetchOompaLoompaDetails(id: Int): OompaLoompaDetailsResponse
+}
+
 class OompaLoompasRemoteDataSource @Inject constructor(
     private val oompaLoompasService: OompaLoompasService,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
-) {
-    suspend fun fetchOompaLoompas(page: Int): OompaLoompaResponse =
+) : OompaLoompasDataSource {
+    override suspend fun fetchOompaLoompas(page: Int): OompaLoompaResponse =
         withContext(ioDispatcher) {
             oompaLoompasService.fetchOompaLoompas(page)
         }
 
-    suspend fun fetchOompaLoompaDetails(id: Int): OompaLoompaDetailsResponse =
+    override suspend fun fetchOompaLoompaDetails(id: Int): OompaLoompaDetailsResponse =
         withContext(ioDispatcher) {
             oompaLoompasService.fetchOompaLoompaDetails(id)
         }

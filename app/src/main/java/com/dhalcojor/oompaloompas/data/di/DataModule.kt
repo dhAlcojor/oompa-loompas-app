@@ -18,6 +18,8 @@ package com.dhalcojor.oompaloompas.data.di
 
 import com.dhalcojor.oompaloompas.data.DefaultOompaLoompasListRepository
 import com.dhalcojor.oompaloompas.data.OompaLoompasListRepository
+import com.dhalcojor.oompaloompas.data.remote.OompaLoompasDataSource
+import com.dhalcojor.oompaloompas.data.remote.OompaLoompasRemoteDataSource
 import com.dhalcojor.oompaloompas.ui.oompaloompaslist.OompaLoompaListItemState
 import dagger.Binds
 import dagger.Module
@@ -34,6 +36,12 @@ interface DataModule {
     fun bindsOompaLoompasListRepository(
         oompaLoompasListRepository: DefaultOompaLoompasListRepository
     ): OompaLoompasListRepository
+
+    @Singleton
+    @Binds
+    fun bindsOompaLoompasDataSource(
+        oompaLoompasDataSource: OompaLoompasRemoteDataSource
+    ): OompaLoompasDataSource
 }
 
 val fakeOompaLoompasLists = listOf(

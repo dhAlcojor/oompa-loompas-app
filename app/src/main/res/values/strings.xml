@@ -16,4 +16,26 @@
 
 <resources>
     <string name="app_name">OompaLoompas</string>
+    <string name="toolbar_title">Oompa Loompas</string>
+    <string name="filter_dialog_title">Filter your Oompa Loompas</string>
+    <string name="filter_dialog_gender_dropdown">Filter by Gender</string>
+    <string name="filter_dialog_gender_alt">Gender Filter</string>
+    <string name="filter_dialog_profession_dropdown">Filter by Profession</string>
+    <string name="filter_dialog_profession_alt">Profession Filter</string>
+    <string name="loading">Loading...</string>
+    <string name="generic_error_message">Oops! Something went wrong.\nPlease, try again later.</string>
+    <string name="previous_page_icon_alt">Previous page</string>
+    <string name="next_page_icon_alt">Next page</string>
+    <string name="oompa_loompa_image_alt">Oompa Loompa image</string>
+    <string name="gender_label">Gender: %1$s</string>
+    <string name="age_label">Age: %1$s</string>
+    <string name="go_back_alt">Go back</string>
+    <string name="basic_tab">Basic</string>
+    <string name="quota_tab">Quota</string>
+    <string name="favorite_tab">Favorite</string>
+    <string name="height_label">Height: %1$s</string>
+    <string name="color_label">Color: %1$s</string>
+    <string name="food_label">Food: %1$s</string>
+    <string name="random_title">Random:</string>
+    <string name="song_title">Song</string>
 </resources>

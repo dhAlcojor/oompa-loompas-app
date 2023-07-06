@@ -17,14 +17,22 @@
 package com.dhalcojor.oompaloompas.ui.oompaloompaslist
 
 
+import com.dhalcojor.oompaloompas.data.OompaLoompasListRepository
+import com.dhalcojor.oompaloompas.data.local.models.OompaLoompa
+import com.dhalcojor.oompaloompas.data.local.models.OompaLoompaDetails
+import com.dhalcojor.oompaloompas.data.local.models.OompaLoompaResult
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import com.dhalcojor.oompaloompas.data.OompaLoompasListRepository
+import java.io.IOException
 
 /**
  * Example local unit test, which will execute on the development machine (host).
@@ -34,26 +42,96 @@ import com.dhalcojor.oompaloompas.data.OompaLoompasListRepository
 @OptIn(ExperimentalCoroutinesApi::class) // TODO: Remove when stable
 class OompaLoompasListViewModelTest {
     @Test
-    fun uiState_initiallyLoading() = runTest {
-        val viewModel = OompaLoompasListViewModel(FakeOompaLoompasListRepository())
-        assertEquals(viewModel.uiState.first(), OompaLoompasListUiState.Loading)
+    fun uiState_initialState() = runTest {
+        val viewModel =
+            OompaLoompasListViewModel(
+                FakeOompaLoompasListRepository(),
+                StandardTestDispatcher(testScheduler)
+            )
+        val uiState = viewModel.uiState.first()
+        assertEquals(uiState.isLoading, false)
+        assertEquals(uiState.currentPage, 1)
+        assertEquals(uiState.totalPages, 1)
+        assertEquals(uiState.oompaLoompasList.size, 0)
+        assertEquals(uiState.userMessages.size, 0)
     }
 
     @Test
-    fun uiState_onItemSaved_isDisplayed() = runTest {
-        val viewModel = OompaLoompasListViewModel(FakeOompaLoompasListRepository())
-        assertEquals(viewModel.uiState.first(), OompaLoompasListUiState.Loading)
+    fun uiState_onFetchPage() = runTest {
+        val testDispatcher = UnconfinedTestDispatcher(testScheduler)
+        Dispatchers.setMain(testDispatcher)
+
+        try {
+            val viewModel =
+                OompaLoompasListViewModel(
+                    FakeOompaLoompasListRepository(),
+                    StandardTestDispatcher(testScheduler)
+                )
+            viewModel.fetchOompaLoompas(1)
+
+            advanceUntilIdle()
+
+            val uiState = viewModel.uiState.first()
+            val oompaLoompa = uiState.oompaLoompasList[0]
+            assertEquals(uiState.isLoading, false)
+            assertEquals(uiState.currentPage, 1)
+            assertEquals(uiState.totalPages, 20)
+            assertEquals(uiState.oompaLoompasList.size, 1)
+            assertEquals(uiState.userMessages.size, 0)
+            assertEquals(oompaLoompa.id, 1)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun uiState_onFetchError() = runTest {
+        val testDispatcher = UnconfinedTestDispatcher(testScheduler)
+        Dispatchers.setMain(testDispatcher)
+
+        try {
+            val viewModel =
+                OompaLoompasListViewModel(
+                    FakeOompaLoompasListRepository(),
+                    StandardTestDispatcher(testScheduler)
+                )
+            viewModel.fetchOompaLoompas(2)
+
+            advanceUntilIdle()
+
+            val uiState = viewModel.uiState.first()
+            val userMessage = uiState.userMessages[0]
+            assertEquals(uiState.isLoading, false)
+            assertEquals(uiState.oompaLoompasList.size, 0)
+            assertEquals(uiState.userMessages.size, 1)
+            assertEquals(userMessage, "Error fetching oompa loompas")
+        } finally {
+            Dispatchers.resetMain()
+        }
     }
 }
 
 private class FakeOompaLoompasListRepository : OompaLoompasListRepository {
+    private var _oompaLoompaResult: OompaLoompaResult? = null
+    override val oompaLoompaResult: OompaLoompaResult?
+        get() = _oompaLoompaResult
 
-    private val data = mutableListOf<String>()
+    override suspend fun fetchOompaLoompas(page: Int, refresh: Boolean): OompaLoompaResult {
+        return when (page) {
+            1 -> OompaLoompaResult(
+                1,
+                20,
+                listOf(OompaLoompa(1, "firstName", "lastName", "image", "profession", 21, "gender"))
+            )
 
-    override val oompaLoompasLists: Flow<List<String>>
-        get() = flow { emit(data.toList()) }
+            2 -> throw IOException("Error fetching oompa loompas")
 
-    override suspend fun add(name: String) {
-        data.add(0, name)
+            else -> OompaLoompaResult(1, 1, listOf())
+        }
     }
+
+    override suspend fun fetchOompaLoompaDetails(id: Int): OompaLoompaDetails {
+        TODO("Not yet implemented")
+    }
+
 }
