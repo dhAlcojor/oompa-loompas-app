@@ -1,3 +1,7 @@
+<p align="center">
+    <img src="app/src/main/res/mipmap-mdpi/ic_launcher_foreground.webp" alt="app-icon" width="96" />
+</p>
+
 # oompa-loompas-app
 
 Android native app to help with the management of Oompa Loompas
